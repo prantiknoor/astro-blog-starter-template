@@ -1,0 +1,160 @@
+---
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+---
+
+<AdminLayout title="Create New Post">
+    <div class="mb-8">
+        <a href="/admin" class="text-sm text-blue-600 hover:underline">← Back to Dashboard</a>
+    </div>
+
+    <Card>
+        <CardHeader>
+            <CardTitle>Create New Blog Post</CardTitle>
+            <CardDescription>Fill out the form below to publish a new post.</CardDescription>
+        </CardHeader>
+        <form id="create-post-form" method="POST">
+            <CardContent className="space-y-4">
+                <div id="error-banner-global" class="hidden bg-red-50 border border-red-200 text-red-600 p-4 rounded text-sm mb-2">
+                    <strong id="error-title">Error:</strong>
+                    <div id="error-list-global" class="mt-1"></div>
+                </div>
+
+                <div class="space-y-2">
+                    <Label htmlFor="title">Title</Label>
+                    <Input id="title" name="title" placeholder="A catchy title..." required />
+                    <div id="error-field-title" class="text-red-500 text-xs mt-1 hidden"></div>
+                </div>
+
+                <div class="space-y-2">
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea id="description" name="description" placeholder="A brief summary of the post..." required />
+                    <div id="error-field-description" class="text-red-500 text-xs mt-1 hidden"></div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <Label htmlFor="pubDate">Publish Date</Label>
+                        <Input id="pubDate" name="pubDate" type="date" required />
+                        <div id="error-field-pubDate" class="text-red-500 text-xs mt-1 hidden"></div>
+                    </div>
+                    <div class="space-y-2">
+                        <Label htmlFor="heroImage">Upload Hero Image</Label>
+                        <Input id="heroImage" name="heroImage" type="file" accept="image/*" />
+                        <div id="error-field-heroImage" class="text-red-500 text-xs mt-1 hidden"></div>
+                    </div>
+
+                </div>
+
+                <div class="space-y-2">
+                    <Label htmlFor="content">Content (Markdown)</Label>
+                    <Textarea id="content" name="content" className="min-h-[300px]" placeholder="# Hello World..." required />
+                    <div id="error-field-content" class="text-red-500 text-xs mt-1 hidden"></div>
+                </div>
+            </CardContent>
+
+            <CardFooter className="flex justify-end space-x-2">
+                <a href="/admin">
+                    <Button variant="outline" type="button">Cancel</Button>
+                </a>
+                <Button type="submit" id="submit-btn">Publish Post</Button>
+            </CardFooter>
+        </form>
+    </Card>
+</AdminLayout>
+
+<script>
+  import { actions } from 'astro:actions';
+
+  const form = document.getElementById('create-post-form') as HTMLFormElement;
+  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+  const globalErrorBanner = document.getElementById('error-banner-global') as HTMLDivElement;
+  const globalErrorList = document.getElementById('error-list-global') as HTMLDivElement;
+
+  function resetErrors() {
+    globalErrorBanner?.classList.add('hidden');
+    if (globalErrorList) globalErrorList.innerHTML = '';
+    
+    // Hide all field errors
+    document.querySelectorAll('[id^="error-field-"]').forEach(el => {
+      el.classList.add('hidden');
+      el.innerHTML = '';
+    });
+  }
+
+  function showFieldError(field: string, msg: string) {
+    const el = document.getElementById(`error-field-${field}`);
+    if (el) {
+      el.innerText = msg;
+      el.classList.remove('hidden');
+    }
+  }
+
+  function showGlobalError(msg: string) {
+    if (globalErrorBanner && globalErrorList) {
+      globalErrorList.innerText = msg;
+      globalErrorBanner.classList.remove('hidden');
+    }
+  }
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    console.log('--- STARTING CREATE ACTION ---');
+    
+    resetErrors();
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'Publishing...';
+    }
+
+    const formData = new FormData(form);
+    
+    try {
+      const { data, error } = await actions.createPost(formData);
+
+      if (error) {
+        console.error('Action Error:', error);
+        
+        let hasFieldErrors = false;
+        const actionError = error as any;
+
+        if (actionError.fields) {
+            Object.entries(actionError.fields).forEach(([field, errors]) => {
+                if (errors && Array.isArray(errors) && errors.length > 0) {
+                    showFieldError(field, errors.join(', '));
+                    hasFieldErrors = true;
+                }
+            });
+        }
+        
+        if (!hasFieldErrors) {
+            showGlobalError(actionError.message || 'An error occurred during submission.');
+        }
+
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'Publish Post';
+        }
+      } else {
+        console.log('Action Success:', data);
+        window.location.href = '/admin';
+      }
+    } catch (err: any) {
+      console.error('Unexpected frontend error:', err);
+      showGlobalError('An unexpected error occurred: ' + (err?.message || 'unknown'));
+      
+      if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'Publish Post';
+      }
+    }
+  });
+</script>
+
+
+

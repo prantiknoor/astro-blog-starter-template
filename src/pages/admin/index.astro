@@ -1,0 +1,61 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { Button } from '../../components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../../components/ui/table';
+import DeletePostButton from '../../components/DeletePostButton';
+import { actions } from 'astro:actions';
+
+// Fetch the list of posts from GitHub
+console.log('--- FETCHING DASHBOARD FROM GITHUB ---');
+const { data, error } = await Astro.callAction(actions.listPosts, {});
+const posts = data?.posts || [];
+
+if (error) {
+    console.error('--- DASHBOARD FETCH ERROR ---', error);
+}
+---
+
+
+<AdminLayout title="Admin Dashboard">
+	<div class="flex justify-between items-center mb-8">
+		<h1 class="text-3xl font-bold tracking-tight">Blog Administration</h1>
+		<a href="/admin/create">
+			<Button>Create New Post</Button>
+		</a>
+	</div>
+
+	<div class="bg-white rounded-lg shadow border overflow-hidden">
+		<Table>
+			<TableHeader>
+				<TableRow>
+					<TableHead>Title</TableHead>
+					<TableHead>Date</TableHead>
+					<TableHead className="text-right">Actions</TableHead>
+				</TableRow>
+			</TableHeader>
+			<TableBody>
+				{posts.map((post) => (
+					<TableRow>
+						<TableCell className="font-medium">{post.data.title}</TableCell>
+						<TableCell>{post.data.pubDate.toLocaleDateString()}</TableCell>
+						<TableCell className="text-right space-x-2 flex justify-end items-center">
+							<a href={`/admin/edit/${post.id}`}>
+								<Button variant="outline" size="sm">Edit</Button>
+							</a>
+							<DeletePostButton client:load slug={post.id} />
+						</TableCell>
+					</TableRow>
+				))}
+			</TableBody>
+		</Table>
+	</div>
+</AdminLayout>
+
+
