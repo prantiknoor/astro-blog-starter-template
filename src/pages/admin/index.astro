@@ -1,34 +1,31 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
-import { Button } from '../../components/ui/button';
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { Button } from "../../components/ui/button";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '../../components/ui/table';
-import DeletePostButton from '../../components/DeletePostButton';
-import { actions } from 'astro:actions';
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "../../components/ui/table";
+import DeletePostButton from "../../components/DeletePostButton";
+import { actions } from "astro:actions";
+
+export const prerender = true;
+
+// Enable caching (e.g. 60 seconds) to reduce excessive GitHub API calls
+Astro.response.headers.set("Cache-Control", "public, max-age=60, s-maxage=120");
 
 // Fetch the list of posts from GitHub
-console.log('--- FETCHING DASHBOARD FROM GITHUB ---');
+console.log("--- FETCHING DASHBOARD FROM GITHUB ---");
 const { data, error } = await Astro.callAction(actions.listPosts, {});
 const posts = data?.posts || [];
 
 if (error) {
-    console.error('--- DASHBOARD FETCH ERROR ---', error);
+	console.error("--- DASHBOARD FETCH ERROR ---", error);
 }
-
-// Make this page cacheable by setting Cache-Control headers
-// Adjust the max-age (browser cache) and s-maxage (CDN cache) values as needed
-Astro.response.headers.set(
-  'Cache-Control',
-  'public, max-age=60, s-maxage=120'
-);
 ---
-
 
 <AdminLayout title="Admin Dashboard">
 	<div class="flex justify-between items-center mb-8">
@@ -48,21 +45,27 @@ Astro.response.headers.set(
 				</TableRow>
 			</TableHeader>
 			<TableBody>
-				{posts.map((post) => (
-					<TableRow>
-						<TableCell className="font-medium">{post.data.title}</TableCell>
-						<TableCell>{post.data.pubDate.toLocaleDateString()}</TableCell>
-						<TableCell className="text-right space-x-2 flex justify-end items-center">
-							<a href={`/admin/edit/${post.id}`}>
-								<Button variant="outline" size="sm">Edit</Button>
-							</a>
-							<DeletePostButton client:load slug={post.id} />
-						</TableCell>
-					</TableRow>
-				))}
+				{
+					posts.map((post) => (
+						<TableRow>
+							<TableCell className="font-medium">
+								{post.data.title}
+							</TableCell>
+							<TableCell>
+								{post.data.pubDate.toLocaleDateString()}
+							</TableCell>
+							<TableCell className="text-right space-x-2 flex justify-end items-center">
+								<a href={`/admin/edit/${post.id}`}>
+									<Button variant="outline" size="sm">
+										Edit
+									</Button>
+								</a>
+								<DeletePostButton client:load slug={post.id} />
+							</TableCell>
+						</TableRow>
+					))
+				}
 			</TableBody>
 		</Table>
 	</div>
 </AdminLayout>
-
-
