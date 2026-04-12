@@ -12,7 +12,7 @@ import {
 import DeletePostButton from "../../components/DeletePostButton";
 import { actions } from "astro:actions";
 
-export const prerender = true;
+// export const prerender = true;
 
 // Enable caching (e.g. 60 seconds) to reduce excessive GitHub API calls
 Astro.response.headers.set("Cache-Control", "public, max-age=60, s-maxage=120");
@@ -25,6 +25,8 @@ const posts = data?.posts || [];
 if (error) {
 	console.error("--- DASHBOARD FETCH ERROR ---", error);
 }
+
+// const posts = [];
 ---
 
 <AdminLayout title="Admin Dashboard">
