@@ -20,6 +20,13 @@ const posts = data?.posts || [];
 if (error) {
     console.error('--- DASHBOARD FETCH ERROR ---', error);
 }
+
+// Make this page cacheable by setting Cache-Control headers
+// Adjust the max-age (browser cache) and s-maxage (CDN cache) values as needed
+Astro.response.headers.set(
+  'Cache-Control',
+  'public, max-age=60, s-maxage=120'
+);
 ---
 
 
